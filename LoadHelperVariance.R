@@ -1,7 +1,7 @@
 library(plyr)
 library(ggplot2)
 #library(knitr)
-loadSTM<-function(x) {
+loadSTM<-function(x) { 
  
   #x<-".//countfiles/met6.csv"
   counts<- read.csv(x, header=T,stringsAsFactors=FALSE) #open file
@@ -79,7 +79,7 @@ for (m in 1:dims[1]){
    
     
     PCRnormvar=PCRvariances[which.min(abs(PCRvariances$initmolecules - ExpectedNumThisParasite)),]$normalisedvar
-    
+    if(!is.na(ExpectedNumThisParasite)){
     
     SequencingN=(countsums[m,d]/2)
     SequencingP=ratioarray[m,d,g]
@@ -90,8 +90,13 @@ for (m in 1:dims[1]){
     CombinedVarianceThisRatio=VarianceThisRatio*SequencingNormalisedVar + VarianceThisRatio*(SequencingNormalisedMean**2) + SequencingNormalisedVar*(probabilityThisParasite**2)
     FullCombinedVarianceThisRatio=CombinedVarianceThisRatio*PCRnormvar + CombinedVarianceThisRatio + PCRnormvar*(probabilityThisParasite**2)
  
-    pracvar[m,d,g]=VarianceThisRatio
-       }
+    pracvar[m,d,g]=FullCombinedVarianceThisRatio #MAJOR BUG, NOT CURRENTLY TAKING ACCOUNT OF SEQ/ETC
+      
+      }
+      else{
+      pracvar[m,d,g]=Inf 
+      }
+      }
      }
   
 }
