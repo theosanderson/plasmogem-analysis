@@ -126,7 +126,7 @@ h3("Estimated accuracy of fitnesses at each timepoint/mouse"),plotOutput("plot4"
 							  tabPanel("Advanced settings",
 							   tabsetPanel(type = "pills",
 							   
-									  tabPanel("Visualisation",checkboxInput(inputId = "showErrorBars",  label = strong("Error guides")  ),checkboxInput(inputId = "colorSelected",  label = strong("Colour selection"),value=TRUE  ),  sliderInput("pointopacity","Point opacity",0,100,70),sliderInput("pointsize","Point size",0,2,1.3,step=0.1)),
+									  tabPanel("Visualisation",checkboxInput(inputId = "newGeneID",  label = strong("Use new gene IDs")),checkboxInput(inputId = "showErrorBars",  label = strong("Error guides")  ),checkboxInput(inputId = "colorSelected",  label = strong("Colour selection"),value=TRUE  ),  sliderInput("pointopacity","Point opacity",0,100,70),sliderInput("pointsize","Point size",0,2,1.3,step=0.1)),
 									   tabPanel("Phenotypes",
                                        checkboxInput(inputId = "Pvalues",  label = strong("Calculate new phenotypes") ,value=TRUE ),
                                        selectInput("padjmethod", "Multiple comparison adjustment:",

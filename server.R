@@ -1,14 +1,14 @@
 
 source("LoadHelperVariance.R") 
  
-library(shiny)      
+library(shiny)        
 
   library(knitr)     
 library(topGO)  
 library(dplyr)    
-library(DT)
+library(DT) 
 library(Hmisc)  
-library("shinyURL") 
+library("shinyURL")    
 
  phenolevels=c("Insufficient data","L. essential","Sig slow","L. dispensable","Sig fast","Unselected")  
  phenolevelslong=c("Insufficient data","Likely essential","Significantly slow","Likely dispensable","Significantly fast","Unselected")  
@@ -19,7 +19,6 @@ library("shinyURL")
 	   if(fast==FALSE){
 files <- list.files(path = "./countfiles/", pattern = "*.csv", full.names = T, recursive = FALSE)
 
-bla <- loadSTM(files[1]) 
 
 inputs <- lapply(files, loadSTM)  #Iterate through files loading each to make a list of dataframes
 tables <- vector("list", length(inputs))
@@ -382,8 +381,10 @@ if( sum(combSource()$selected>0.5)>0){
        
         newcomb$selected = input$pointopacity/100
         if (input$genelist != "") {
+        
             glist = unlist(strsplit(input$genelist, "\n"))
-            newcomb$selected = newcomb$selected * (as.numeric(newcomb$gene %in% glist | newcomb$current_version_ID %in% glist))
+            glist<- sapply(glist,function (x) gsub("^\\s+|\\s+$", "", x))
+            newcomb$selected = newcomb$selected * (as.numeric(newcomb$gene %in% glist | newcomb$current_version_ID %in% glist | newcomb$PfID %in% glist))
             
         } 
 		
@@ -605,9 +606,16 @@ if( sum(combSource()$selected>0.5)>0){
     
     output$geneid <- renderPrint({
 	if(is.na(as.character(storeRow()$gene))){
-	cat("")}
+	cat("")
+	}
 	else{
-        cat(as.character(storeRow()$gene))}
+	if(input$newGeneID){
+	cat(as.character(storeRow()$current_version_ID))
+	}
+	else{
+	cat(as.character(storeRow()$gene))
+	}
+        }
     })
     
     output$genename <- renderPrint({
@@ -665,8 +673,8 @@ cat (" Please note that this is not the full dataset, as you have entered filter
         
         godb <- setNames(as.list(go$GO), go$ID)
         godb
-    })
-	
+    }) 
+	 
 	goDBReactive2 <- reactive({
         if (input$gospecies == "pb") {
             gomap <- read.csv("./otherdata/geneid2gopb.csv", stringsAsFactors = FALSE)
@@ -695,7 +703,7 @@ cat (" Please note that this is not the full dataset, as you have entered filter
                 allgenes = setNames(rep(1, length(comb$PfID)), comb$PfID)
                 myInterestingGenes <- isolate(brushedPoints(comb, input$plot1_brush)$PfID)
                 geneList <- factor(as.integer(comb$PfID %in% myInterestingGenes))
-                names(geneList) <- comb$PfID
+                names(geneList) <- comb$PfID 
                 
             }
             validate(
@@ -828,7 +836,13 @@ output$experiments <- DT::renderDataTable(experimentTable)
 #)
 output$maintable <- DT::renderDataTable({
 cs<-combSource()
-start<-cs[cs$selected>0.5,c("gene","gene_name","gene_product","Relative.Growth.Rate","lower","upper","phenotype")]
+if(input$newGeneID){
+	start<-cs[cs$selected>0.5,c("current_version_ID","gene_name","gene_product","Relative.Growth.Rate","lower","upper","phenotype")]
+	}
+	else{
+	start<-cs[cs$selected>0.5,c("gene","gene_name","gene_product","Relative.Growth.Rate","lower","upper","phenotype")]
+	}
+
 start$upper=round(start$upper,2)
 start$lower=round(start$lower,2)
 start$Relative.Growth.Rate=round(start$Relative.Growth.Rate,2)

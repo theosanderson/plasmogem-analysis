@@ -21,7 +21,7 @@ loadSTM<-function(x) {
   }
   days=(ncols-1)/nmice #Remove 1 (the input), then divide by 3 (num replicates) to get number of days
   #MTG
-  countarray<-array(NA,dim=c(nmice,days,length(tcounts))) #Raw counts for MOUSE, DAY, GENE
+  countarray<-array(NA,dim=c(nmice,days,nrow(tcounts))) #Raw counts for MOUSE, DAY, GENE
   print(paste("Loaded sample ",x,", which has reads for",days,"days"));
   
   for (d in 1:days ) { #Loop to make the days, 1st timepoint is day 4, etc.
@@ -175,7 +175,13 @@ for (m in 1:dims[1]){
     for (g in 1:dims[3]){
       absfitness[m,d,g]=relfitness[m,d,g]/controlmean
       absfitnessvar[m,d,g]=(relfitness[m,d,g]**2/controlmean**2)*((relfitnessvar[m,d,g]/relfitness[m,d,g]**2) + (controlvar/controlmean**2))
+      if (!is.na(absfitness[m,d,g]) & (absfitness[m,d,g]<0.001 |  absfitness[m,d,g]>5)){
+      #disregard
+      absfitness[m,d,g]=NA;
+      absfitnessvar[m,d,g]=Inf;
+      }
     }
+    
   }
   
 }
@@ -218,7 +224,17 @@ normd6toinputC=d6toinput/d6toinput[bcdk]
 else{
 normd6toinputC <- rep(NA, dims[3])
 }
-absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,day4abs=ratioarray[1,1,],day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,],ratioarray[3,2,]),day6abs=ratioarray[1,3,])
+
+
+if(nmice>2){
+day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,],ratioarray[3,2,])
+}
+else{
+day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,])
+}
+
+absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
+#These absolute abundance measures may not actually be useful?
 absfitnessdf$lower=absfitnessdf$fitness-sqrt(absfitnessdf$variance)*2
 absfitnessdf$upper=absfitnessdf$fitness+sqrt(absfitnessdf$variance)*2
 
@@ -242,7 +258,7 @@ for (d in 1:(dims[2]-1)){
   filename<-tail(unlist(strsplit(as.character(x), "/")),1)
    filename<-head(unlist(strsplit(as.character(filename), "\\.")),1)
   merge$experiment=filename 
-  merge$variance=merge$variance*3.2 # hack to try to be better
+  merge$variance=merge$variance*3 # hack to try to be better
  arrays<-list(genes=filteredgenes,input=filteredinput,counts=filteredarray,ratios=ratioarray,ratiosvar=pracvar,absfitness=absfitness,absfitnessvar=absfitnessvar,controlarray=controlcalibratedarray,controlvararray=controlcalibratedvararray,controlnames=controlnames)
   #Find integration effiencies
  return(return(list(table=merge,extra=arrays)))
