@@ -175,11 +175,11 @@ for (m in 1:dims[1]){
     for (g in 1:dims[3]){
       absfitness[m,d,g]=relfitness[m,d,g]/controlmean
       absfitnessvar[m,d,g]=(relfitness[m,d,g]**2/controlmean**2)*((relfitnessvar[m,d,g]/relfitness[m,d,g]**2) + (controlvar/controlmean**2))
-      if (!is.na(absfitness[m,d,g]) & (absfitness[m,d,g]<0.001 |  absfitness[m,d,g]>5)){
+      #if (!is.na(absfitness[m,d,g]) & (absfitness[m,d,g]<0.001 |  absfitness[m,d,g]>5)){
       #disregard
-      absfitness[m,d,g]=NA;
-      absfitnessvar[m,d,g]=Inf;
-      }
+     # absfitness[m,d,g]=NA;
+     # absfitnessvar[m,d,g]=Inf;
+     # }
     }
     
   }
@@ -205,9 +205,11 @@ for (g in 1:dims[3]){
 bcdk=which(filteredgenes=="PBANKA_103780")
 if("PBANKA_103780"%in% filteredgenes){
 normd6toinputA=d6toinput/d6toinput[bcdk]
+norminput=filteredinputratio/filteredinputratio[bcdk]
 }
 else{
 normd6toinputA <- rep(NA, dims[3])
+norminput <- rep(NA, dims[3])
 }
 bcdk=which(filteredgenes=="PBANKA_110420")
 if("PBANKA_110420"%in% filteredgenes){
@@ -233,7 +235,7 @@ else{
 day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,])
 }
 
-absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
+absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,norminput=norminput,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
 #These absolute abundance measures may not actually be useful?
 absfitnessdf$lower=absfitnessdf$fitness-sqrt(absfitnessdf$variance)*2
 absfitnessdf$upper=absfitnessdf$fitness+sqrt(absfitnessdf$variance)*2
@@ -251,15 +253,16 @@ for (d in 1:(dims[2]-1)){
     dayabsfitnessvar[d,g]=gauss[2]
      }
 }
-  
+ 
   merge<-absfitnessdf;
+   merge$input=filteredinputratio
  # colnames(merge)[which(colnames(merge)=="fitness")]="Relative.Growth.Rate"
   merge$file=x 
   filename<-tail(unlist(strsplit(as.character(x), "/")),1)
    filename<-head(unlist(strsplit(as.character(filename), "\\.")),1)
   merge$experiment=filename 
   merge$variance=merge$variance*3 # hack to try to be better
- arrays<-list(genes=filteredgenes,input=filteredinput,counts=filteredarray,ratios=ratioarray,ratiosvar=pracvar,absfitness=absfitness,absfitnessvar=absfitnessvar,controlarray=controlcalibratedarray,controlvararray=controlcalibratedvararray,controlnames=controlnames)
+ arrays<-list(genes=filteredgenes,input=filteredinputratio,counts=filteredarray,ratios=ratioarray,ratiosvar=pracvar,absfitness=absfitness,absfitnessvar=absfitnessvar,controlarray=controlcalibratedarray,controlvararray=controlcalibratedvararray,controlnames=controlnames)
   #Find integration effiencies
  return(return(list(table=merge,extra=arrays)))
 }

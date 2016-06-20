@@ -1,15 +1,15 @@
 
 source("LoadHelperVariance.R") 
- 
+  
 library(shiny)        
 
   library(knitr)     
 library(topGO)  
-library(dplyr)    
+library(dplyr)     
 library(DT) 
 library(Hmisc)  
 library("shinyURL")    
-
+ 
  phenolevels=c("Insufficient data","L. essential","Sig slow","L. dispensable","Sig fast","Unselected")  
  phenolevelslong=c("Insufficient data","Likely essential","Significantly slow","Likely dispensable","Significantly fast","Unselected")  
   phenolevelscolor=c("black", "#ed1c24", "blue","#007603","purple", "darkgray")
@@ -34,7 +34,7 @@ load(file="cache")
 }
 fullSet$Relative.Growth.Rate=fullSet$fitness
 
-
+ 
 experimentTable<-as.data.frame(table(fullSet$experiment))
 experimentTable<-data.frame(Experiment=experimentTable$Var1,Genes=experimentTable$Freq)
 
