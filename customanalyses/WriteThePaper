@@ -1,0 +1,137 @@
+## Results
+
+Although PlasmoGEM vectors have long homology arms on average, this did not raise integration efficiency in P. berghei sufficiently to allow the entire PlasmoGEM KO resource to be transfected at once and growth phenotypes to be determined with sufficient confidence. The vector library was therefore screened in pools of 90-120 as illustrated in Fig. 1. Three transfections with the same pool were followed by drug selection in inbred BALB/c mice to eliminate wild type parasites, and growth rates of mutants were determined by counting barcodes in blood samples taken daily between days 4 and 8 post infection (p. i.). Most vectors were assigned to at least two different pools, increasing the confidence with which growth phenotypes could be assigned and allowing the impact of genetically diverse parasite populations on phenotype to be determined. 
+
+[Figure 1. Schematic overview of the main growth rate screen. Each of [NumberOfKOVectors] knock-out
+vectors was assigned to a vector pool and them ajority of phenotypes were verified in the
+context of a different pool. The same seven control vectors were added to each pool prior
+to transfection. All infections were sampled daily on days 4-8 p. i., exceptin a few instances,
+when mice developing signs of disease on day 7 led to early termination ofthe experiment.
+Electroporation cuvettes were sampled additionally toverify pool compositions.]
+
+
+### An algorithm generating reproducible growth rate phenotypes from barcode counts
+
+
+To measure asexual growth, we used the gene-specific 11 base pair barcodes included in PlasmoGEM vectors (Schwach et al., 2015). These can be amplified linearly from genomic DNA extracts and counted on a next generation sequencer (Gomes et al., 2015). With this approach, daily growth rates were determined form the change in abundance of a barcode compared to a set of controls in the same infection, resulting in a measure of the relative growth rate (RGR). 
+
+Mutants increased or dropped out of the parasite population on different days, depending on both, their competitive fitness and their initial abundance. As a consequence, the most robust RGR was measured on a different day for each mutant, and many mutants yielded meaningful measurements for only part of the time course. We therefore opted for aggregating data for each mutant into a single best estimate of RGR. In choosing this approach we initially disregarded the likely possibility that for a small number of mutants their growth phenotypes would change in response to environmental factors related to developing immunity or increasing competition. 
+
+Barcode counts presented several challenges to computational analysis. First, the variance in normalised counts increased, as the abundance of a mutant decreased, since rare barcodes were more sensitive to sampling and measurement errors (Fig. Sx). This necessitated a statistical model to estimate the variance of each read count measurement, and a way of propagating the variances into barcode ratios and into the daily RGRs calculated from them. We then weighted measurements from all days and replicates by the inverse of their variance, giving the most robust measurements the greatest impact on the combined value.
+
+Secondly, to control for batch effects between pools, the same four control vectors were included in each transfection, which disrupted genes known not to be dispensable in asexual blood stages (Gomes et al., 2015). Their weighted mean growth rate on a given day was defined as 1. Three additional controls were chosen for their known reduced growth phenotypes (Gomes et al., 2015). Daily growth data from all controls were used to calculate RGRs for each mutant, and where multiple measurements were available for the same gene, these were combined, again weighted by inverse variance.  A detailed description of the computational analysis is provided as “Supplementary Methods and Scripts’’ and all data can be browsed, searched, downloaded and analysed through a phenotype database accessible through the PlasmoGEM website (http://plasmogem.ac.uk), which also offers access to the raw barcode ratios. 
+
+In total, we generated 4424 RGR measurements for 2571 different genes, which in Fig. 2A are plotted against a measure of confidence (explain confidence in figure legend). The observed variance among the control genes across >50 replicates was low (Fig. 2B), suggesting it would be possible to distinguish at least four growth phenotypes, as defined and illustrated in Fig. 2C: Essential genes, slow growing mutants, dispensable genes and fast growers. Although the confidence score was only based on a model of variance, it corresponded well to actual experimental reproducibility for the large subset of genes for which independent replicates were available (Fig. 2D). For instance, >75% of measurements had a confidence score >4 and the correlation coefficient, r2, for duplicates in this set was strong at 0.95 (Fig. 2E), increasing even further for RGR measurements with higher confidence scores (Fig. 2D). Since replicate measurements were from differently composed pools, these data also suggested that growth phenotypes were largely independent of the genetic composition of a particular pool. 
+
+```{r,fig.height=2,fig.width=5,dpi=150,fig.cap="1A"}
+data<-addPhenotypes(multicomb())
+ggplot(data,aes(x=Relative.Growth.Rate,y=Confidence,color=phenotype))+geom_point(size=0.1,alpha=0.5)+scale_color_manual(values = phenolevelscolor)+labs(color="Growth phenotype",x="Relative Growth Rate")	+theme_classic()
+```
+
+
+```{r,fig.height=1.5,fig.width=4,dpi=150,fig.cap="1B"}
+starter<-singlecomb()
+vgeneid<-c("PBANKA_140160", "PBANKA_110420","PBANKA_103440", "PBANKA_051490","p230p-tag","PBANKA_103780","PBANKA_051500")
+vnames<-c("mtlp", "bckdhB", "pIV", "p28","p230p","SOAP","P25")
+starter$PrettyNames=vnames[match(starter$gene,vgeneid)]
+ggplot(starter[starter$PrettyNames%in%vnames,],aes(x=Relative.Growth.Rate,fill=PrettyNames))+geom_density(alpha=0.5,weight=0.1,size=0.1) +theme_classic()+ theme(legend.position="none")
+```
+
+```{r,fig.height=2,fig.width=2,dpi=150,fig.cap="1D and 1E"}
+fig.cap=""
+starter<-singlecomb()
+
+#ggplot(starter,aes(x=Confidence))+geom_density()
+starter <- starter[sample(nrow(starter)),]
+cutoffs=0:9
+
+storedata=data.frame(ConfidenceGreaterThan=cutoffs,Rsquared=rep(NA,10),NumberOfObservations=rep(NA,10))
+for (cutoff in cutoffs){
+
+cs<-starter
+cs<-cs[cs$Confidence>=cutoff,]
+table<-as.data.frame(table(cs$gene))
+multiples<-unique(table[table$Freq>1,]$Var1)
+tempcs<-cs
+matches<-match(multiples,cs$gene)
+tempcs[matches,]$gene=NA
+matches<-match(multiples,cs$gene)
+matches2<-match(multiples,tempcs$gene)
+df1<-cs[matches,]
+df2<-cs[matches2,]
+corr<-cor(df1$fitness,df2$fitness,use="complete.obs")
+print(ggplot(df1,aes(x=df1$fitness,y=df2$fitness,label=df1$gene))+geom_point(alpha=0.3,size=0.1)+ggtitle(paste(c("Conf>",cutoff,", R^2: ",round(corr^2,2)),collapse="",sep=""))+ geom_abline(intercept = 0,alpha=0.2)+coord_cartesian(xlim=c(0,1.2),ylim=c(0,1.2))+labs(x="RGR 1",y="RGR 2"))
+print("--")
+storedata[storedata$ConfidenceGreaterThan==cutoff,"Rsquared"]=corr^2
+storedata[storedata$ConfidenceGreaterThan==cutoff,"NumberOfObservations"]=sum(starter$Confidence>=cutoff)
+
+}
+print("Data for Fig 2D")
+print(storedata)
+```
+
+
+Targeting efficiency is determined by properties of the vector and the target locus.
+ 
+We reasoned that for the 915 mutants that lacked a significant growth phenotype, their abundance during the infection should reflect primarily the efficiency of vector integration. These mutants therefore provided a unique opportunity to infer ideal vector properties for gene targeting in P. berghei, but also to identify more generally the parameters that affect homology-directed repair in a eukaryote. We calculated vector specific integration efficiencies by normalising the relative abundance of a mutant during the infection to the relative abundance of the vector in the electroporation cuvette, and by using the four normally growing controls to normalise between experiments. 
+
+For each vector, integration efficiency was highly reproducible between differently composed pools (Fig. 3A). The distribution of relative abundances in the blood for these mutants was well approximated by a log-normal frequency function (Fig. 3B), suggesting it was controlled by several independent variables interacting in a multiplicative fashion. Multiple regression analysis showed that the length of the shorter homology arm was by far the most important vector property associated with integration efficiency (Fig. 3C). The effect was evident over the entire range of 0.4 kb to >8 kb arms represented in the PlasmoGEM resource, but it was most pronounced for shorter arm length, with total arm length gaining in important as vectors became more symmetrical. This is broadly similar to the rules derived from much smaller datasets for the efficiency of homologous recombination in mouse embryonic stem cells, where total arm length is considered important for replacement vectors, once a minimal requirement of ~450 bp is fulfilled (PMID: 1656234, PMID: 1321331). In P. berghei short arm length alone accounted for around a 10-fold variation in recombination rates, while other parameters, such as the length of the longer arm, the sum or product of both arms, their GC content, or the distance between homology regions in the genome were less strongly associated (Supplemental Fig. or Table showing the data), suggesting that when designing efficient replacement vectors for P. berghei, the length of the shorter arm is the key factor. 
+
+A feature of the target locus correlated with integration efficiency was the mRNA abundance of the target gene’s ortholog in P. falciparum, the only species for which high resolution time courses of transcription are currently available from synchronized parasite populations (Ref). Importantly, a strong positive association between recombination and mRNA abundance, was apparent only when gene expression data during schizogony were considered (Fig. 3D), but not during other parts of the asexual cycle. Transcription-associated recombination (TAR, PMID: 19139058 for review) has previously been linked to recombination hot spot using reporter constructs in Saccharomyces cerevisiae (PMID: 6094015) and later in mammalian cells (PMID: 2167441), where the underlying mechanism is different from double-strand break-induced recombination. TAR is thought to be initiated by stalled replication forks (PMID: 17967877) and the restriction to S-phase of the cell cycle is therefore one of its hallmarks. The limitation of TAR to the replicative schizont stage in Plasmodium in entirely consistent (Fig. q), and the current study thus provides evidence from a genome scale data set that TAR is in fact a widely conserved phenomenon, which affects homologous recombination at many loci in addition to canonical double strand break repair. Interestingly, at least one subunit of the THO protein complex implicated in TAR in yeast and mammalian cells is conserved in P. berghei (tho2 = PBANKA_1462700). Repeat analysis taking into account for instance the pyrimidine nucleotide labelling data (Painter and Llinas, unpublished). 
+
+When vector properties and transcriptional activity of target genes during schizogony where combined in a multiplicative model, xxx of the variance in recombination efficiency could be predicted, suggesting that in combination these parameters explain much of the variation in abundance observed in the experiment. Need to flesh this out. Supplemental Figure?
+
+A large proportion of P. berghei genes are required for normal asexual blood stage growth in vivo
+
+Xxx % of the core genome (as defined by Otto et al., 2015) were required for normal asexual parasite growth in BALB/c mice (Fig. 4A). This number increased to xxx % if multigene families encoding variant antigens were omitted. This is an unexpectedly large number, considering that (i) we studied only one of many morphologically distinct life cycle stages, (ii) xxx % of P. berghei genes in the phenotype database, RMgmDB (ref), could be disrupted without reported growth rate phenotype and, (iii) genetic essentiality in cultured yeast or human cells is much lower, at xxx% and xxx %, respectively (Supplemental Fig. x species pies; Refs). 
+
+To understand this high degree of genetic essentiality in P. berghei, we first considered whether there were systematic biases in the genes that were included in the study, when compared to those for which no PlasmoGEM KO vector could be made. Phenotypes were distributed apparently evenly along the genome (Fig. 4B), no larger sections of chromosomes were inaccessible to vector integration, and phenotypes of neighbouring genes were independent (not shown). Genes with available PlasmoGEM vector for inclusion in this study were, however, on average shorter, had a higher AT content and less repetitive sequence, reflecting technical biases in the vector production pipeline (Supplemental Fig. x). In contrast, putative essential gene functions were not enriched or depleted among the studied genes (look at size, AT content, repetitiveness, sexiness, GO terms enriched or depleted). Importantly, ribosomal genes were essential, as would be predicted from knock out screens in yeast or human cells (refs), while members of variant antigen families were predictably dispensable (Fig. 4C). Furthermore, genetic targetability was very high and growth phenotypes were expectedly mild for genes that are more highly expressed sexual or mosquito stages, when compared to asexual blood stages (Fig. 4D). 
+
+These data suggested that growth phenotypes generally reflected gene functions, without ruling out that some genes were incorrectly classified as essential. To obtain a more precise estimate of the false negative rate of the screen, we considering for which genes fully viable and genotyped KO clones had been documented in the curated P. berghei phenotype database, RMgmDB (ref). The barseq screen incorrectly identified xxx of xxx recorded viable mutants as essential, suggesting a false negative rate in the screen of around xxx %. This rate was even higher for vectors that did not produce sufficient barcode counts to allow any growth rate estimate. Using our model of vector integration efficiency developed above, we found false negatives to be strongly associated with low predicted vector integration rate (xxx vs. xxx for all essential genes). Based on this data we omitted genes without sufficient barcode counts and know false negatives from further analysis. predicted some of most likely technical failures among the essential genes. Taken together, these considerations suggest that the screen produces a reasonably accurate estimate of the parasites “essentialome” during asexual growth in the blood. 
+
+the possibility of false negative inflating the estimated essentialome
+Enrichment for genes with genotyped mutant in the literature: genes studied, genes not studied, genes found essential, genes found slow, genes found dispensable.
+
+Knowing the intrinsic integration rate of each gene KO vector and the resulting RGR of the mutant we were able to match vectors so as to create larger pools in which mutants were represented with more similar abundance (Fig. Sx). 
+
+Superpools even more efficient simultaneous phenotyping, further decreasing the amount of labour and animals needed for screens and increasing the reliability of the conclusions since each mutant phenotype is internally controlled by all other mutants.
+
+Discussion 
+
+When barcoded gene KO vectors are transfected as pools, the abundance of individual mutants that emerge under drug selection varies widely, because mutants have different growth rates, and because individual vectors and target loci undergo homologous recombination at different rates.
+
+Literature reports 502 KO attempts. Suggested essentiality is: 38.8 %
+Biased gene choice, underreporting of essential gene and increased power to find phenotypes through competitive assay.
+
+
+
+Control genes:
+PBANKA_1104200
+PBANKA_1401600
+PBANKA_1037800
+PBANKA_1034400
+PBANKA_0514900
+PBANKA_0515000
+
+Numbers:
+Genes in the core genome
+Genes in multigene families
+Total number of genes in the genome.
+PlasmoGEM KO vectors
+Vectors included in screen
+Phenotypes obtained
+Essentials
+Slow 
+Dispensable
+Fast
+Insufficient data
+RMgmDB Essential
+RMgmDB Viable
+RMgmDB Total
+
+
+
+
+
+
+

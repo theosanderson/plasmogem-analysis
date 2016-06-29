@@ -1,0 +1,29 @@
+```{r, fig.cap=""}
+fig.cap=""
+starter<-combSource()
+
+#ggplot(starter,aes(x=Confidence))+geom_density()
+starter <- starter[sample(nrow(starter)),]
+for (cutoff in 0:9){
+
+cs<-starter
+cs<-cs[cs$Confidence>=cutoff,]
+table<-as.data.frame(table(cs$gene))
+multiples<-unique(table[table$Freq>1,]$Var1)
+tempcs<-cs
+matches<-match(multiples,cs$gene)
+tempcs[matches,]$gene=NA
+matches<-match(multiples,cs$gene)
+matches2<-match(multiples,tempcs$gene)
+df1<-cs[matches,]
+df2<-cs[matches2,]
+corr<-cor(df1$fitness,df2$fitness)
+print(ggplot(df1,aes(x=df1$fitness,y=df2$fitness))+geom_point()+ggtitle(paste(c("Both confidence values greater than ",cutoff,", correlation: ",corr),collapse="",sep=""))+ geom_abline(intercept = 0)+coord_cartesian(xlim=c(0,1.2),ylim=c(0,1.2))+labs(x="Fitness value from one experiment",y="Fitness value from another experiment"))
+print(mean(abs(df1$fitness-df2$fitness)))
+expdiff=sqrt(df1$variance+df2$variance)*sqrt(2/3.14)
+print(mean(expdiff))
+}
+```
+
+
+

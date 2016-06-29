@@ -1,0 +1,33 @@
+```{r, comment=NA}
+fitgroups=1
+intgroups=9
+cs<-combSource()
+cs[cs$gene %in% c("PBANKA_010060",
+"PBANKA_070070",
+"PBANKA_114580",
+"PBANKA_114590",
+"PBANKA_110130",
+"PBANKA_135800",
+"PBANKA_094130"),]$phenotype="Sig slow"
+slows<-cs[cs$phenotype=="L. redundant"| cs$phenotype=="Sig fast",]
+nrow(slows)
+
+slows$intrank=rank(slows$normd6toinput)
+
+slows$intgroup=cut(slows$intrank,breaks=intgroups,labels=F)
+table(slows$intgroup)
+
+slows$group=slows$intgroup
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","green")
+ggplot(slows,aes(x=fitness,y=log10(normd6toinput),color=factor(group)))+geom_point()+  scale_colour_manual(values=cbPalette)+labs(y="Normalised day 6 abundance (log10)", x="Fitness")
+ggplot(slows,aes(x=fitness,y=Confidence,color=factor(group)))+geom_point()+  scale_colour_manual(values=cbPalette)
+
+for(i in 1:10){
+print(i)
+cat(paste(as.character(slows[slows$group==i,]$gene)),sep="\n",collapse="\n")
+}
+
+
+```
+
+

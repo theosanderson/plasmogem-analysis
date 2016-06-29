@@ -1,0 +1,37 @@
+---
+title: "Conservation score"
+---
+Conservation score and DN/DS from Amato et al. https://www.malariagen.net/publications/genomic-epidemiology-artemisinin-resistant-malaria
+
+Conservation Score (Pf vs. Pc)
+=============
+```{r,echo=FALSE}
+data<-read.table("otherdata/RobertoConservation")
+colnames(data)=c("PfID","Conservation.Score", "nafr","nafrR","nsea","nseaR","safr","safrR","ssea","sseaR","logfc")
+data$dnds=data$nafr/data$safr;
+cs<-combSource()
+m<-merge(data,cs)
+
+m<-m[m$phenotype %in% c("L. essential","Sig slow","L. dispensable"),]
+ggplot(m,aes(x=Conservation.Score,y=Relative.Growth.Rate,color=phenotype,group=1))+geom_point(alpha=0.5)+geom_smooth(color="black")+ scale_color_manual(values = phenolevelscolor)
+ggplot(m,aes(x=phenotype,y=Conservation.Score,color=phenotype))+geom_boxplot()+ scale_color_manual(values = phenolevelscolor)
+
+summary(fm1 <- aov(Conservation.Score ~ phenotype, data = m))
+TukeyHSD(fm1, ordered = TRUE)
+
+```
+DN/DS (Africa)
+=============
+```{r,echo=FALSE}
+
+ggplot(m,aes(x=log2(dnds),y=Relative.Growth.Rate,color=phenotype,group=1))+geom_point(alpha=0.5)+geom_smooth(color="black")+ scale_color_manual(values = phenolevelscolor)
+ggplot(m,aes(x=phenotype,y=dnds,color=phenotype))+geom_boxplot()+ scale_color_manual(values = phenolevelscolor)
+
+summary(fm1 <- aov(dnds ~ phenotype, data = m))
+TukeyHSD(fm1, ordered = TRUE)
+
+
+
+
+
+```

@@ -1,0 +1,111 @@
+```{r, fig.cap=""}
+fig.cap=""
+starter<-combSource()
+
+#ggplot(starter,aes(x=Confidence))+geom_density()
+starter <- starter[sample(nrow(starter)),]
+
+
+cs<-starter
+cs<-cs[cs$phenotype=="L. dispensable",]
+ estimates<- as.matrix (cs [grep("normd6toinput",names(cs))] ) #forward
+ dim(estimates)
+ first=estimates[,1]
+ 
+ estimates2<-sweep(estimates, c(1), first, "/") #Calculate ratios for each gene for each timepoint
+mean(estimates2)
+factors<-apply(estimates2, c(2), median,na.rm=T)
+factors
+ estimates2<-sweep(estimates, c(1), factors, "*") #Calculate ratios for each gene for each timepoint
+
+
+median<-apply(estimates2, c(1), median,na.rm=T)
+#median
+
+cs$median=median
+cs$logmedian=log10(cs$median)
+table<-as.data.frame(table(cs$cloneid))
+multiples<-unique(table[table$Freq>1,]$Var1)
+tempcs<-cs
+matches<-match(multiples,cs$cloneid)
+tempcs[matches,]$cloneid=NA
+matches<-match(multiples,cs$cloneid)
+matches2<-match(multiples,tempcs$cloneid)
+df1<-cs[matches,]
+#df1=df1[df1$Confidence>6,]
+nrow(df1)
+cor(df1$normd6toinputA,df1$input,use="complete.obs")
+df2<-cs[matches2,]
+corr<-cor(df1$logmedian,df2$logmedian,use="complete.obs")
+corr
+corr^2
+print(ggplot(df1,aes(df1$logmedian,df2$logmedian))+geom_point()+ geom_abline(intercept = 0)+labs(x="Fitness value from one experiment",y="Fitness value from another experiment"))
+
+
+
+
+csmono<-cs  %>%  group_by(cloneid)  %.%  summarise(timesAnalysed=length(Relative.Growth.Rate),logmedian=mean(logmedian,na.rm=T),left_arm_length=mean(left_arm_length),right_arm_length=mean(right_arm_length))
+
+
+csmono<-csmono[!is.na(csmono$left_arm_length),]
+csmono$min=pmin(csmono$left_arm_length,csmono$right_arm_length)
+csmono$max=pmax(csmono$left_arm_length,csmono$right_arm_length)
+ggplot(csmono,aes(x=min,y=logmedian))+geom_point()+scale_x_log10()+geom_smooth()
+ggplot(csmono,aes(x=max,y=logmedian))+geom_point()+scale_x_log10()+geom_smooth()
+#csmono
+
+library(caret)
+library(randomForest)
+#set.seed(998)
+csmono$id=1:nrow(csmono)
+
+inTraining <- createDataPartition(csmono$id, p = .75, list = FALSE)
+training <- csmono[ inTraining,]
+testing  <- csmono[-inTraining,]
+
+mod<-train(logmedian ~ min + max, training,method="rf")
+mod
+
+nrow(testing)
+
+prediction<-predict(mod, testing)
+testing$pred=prediction
+length(prediction)
+
+
+
+corr<-cor(testing$pred,testing$logmedian,use="complete.obs")
+corr
+corr^2
+print(ggplot(testing,aes(pred,logmedian))+geom_point()+ geom_abline(intercept = 0)+labs(x="Prediction",y="Actual"))
+
+
+mod<-train(logmedian ~ min + max, csmono,method="rf")
+ws<-starter
+controls=c("PBANKA_140160","PBANKA_110420","PBANKA_103440","PBANKA_051490","PBANKA_103780","PBANKA_051500")
+ws<-ws[!is.na(ws$left_arm_length) & ws$phenotype!="Sig fast"& ws$phenotype!="Sig slow" & !(ws$gene %in% controls),]
+ws$min=pmin(ws$left_arm_length,ws$right_arm_length)
+ws$max=pmax(ws$left_arm_length,ws$right_arm_length)
+ws$predict<-predict(mod,ws)
+knownnegs<-c("PBANKA_040150","PBANKA_050740","PBANKA_082110","PBANKA_082690","PBANKA_092730","PBANKA_093130","PBANKA_094130","PBANKA_103310","PBANKA_113780","PBANKA_114030","PBANKA_124300","PBANKA_130990","PBANKA_131810")
+ws$inneg<-ws$gene %in% knownnegs
+
+
+ggplot(ws,aes(x=predict))+geom_density(aes(fill=phenotype),alpha=0.3)+geom_density(aes(color=phenotype),alpha=1)
+ggplot(ws,aes(x=predict,y=min,color=inneg))+geom_point()
+ggplot(ws,aes(x=predict,y=max,color=inneg))+geom_point()
+ws$warning=ws$predict < (0-1)
+table(ws$phenotype)
+table(ws$warning,ws$phenotype)
+
+median(ws[ws$gene %in% knownnegs,]$predict)
+median(ws$predict)
+
+```
+
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+```{r, comment=NA}
+fitgroups=3
+intgroups=2
+cs<-combSource()
+slows<-cs[cs$phenotype=="Sig slow",]
+nrow(slows)
+slows$fitrank=rank(slows$fitness)
+slows$fitgroup=cut(slows$fitrank,breaks=3,labels=F)
+slows$intrank=NA;
+for(i in 1:fitgroups){
+slows[slows$fitgroup==i,]$intrank=rank(slows[slows$fitgroup==i,]$normd6toinput)
+}
+slows$intrank
+slows$intgroup=cut(slows$intrank,breaks=2,labels=F)
+table(slows$intgroup,slows$fitgroup)
+cat(paste(as.character(slows[slows$intgroup==2&slows$fitgroup==3,]$gene)),sep="\n",collapse="\n")
+```

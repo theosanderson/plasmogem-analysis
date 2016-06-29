@@ -1,0 +1,9 @@
+```{r}
+bla<-read.csv("./otherdata/complexes",header=T)
+cs<-combSource()
+
+m<-merge(cs,bla,by.x="gene",by.y="PbID")
+
+ggplot(m,aes(x=Relative.Growth.Rate,color=complex,y=complex,label=gene_name))+geom_point()+geom_text()
+
+```

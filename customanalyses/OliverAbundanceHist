@@ -1,0 +1,7 @@
+```{r}
+cs<-combSource();
+redundant<-cs[cs$phenotype=="L. dispensable",]
+ggplot(redundant,aes(x=day4abs))+geom_density(aes(x=day4abs))+geom_density(aes(x=day5abs),color="blue")+geom_density(aes(x=day6abs),color="red")+xlim(0,0.1)
+
+
+```

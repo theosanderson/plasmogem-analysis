@@ -1,0 +1,37 @@
+```{r, fig.cap=""}
+fig.cap=""
+starter<-combSource()
+
+#ggplot(starter,aes(x=Confidence))+geom_density()
+starter <- starter[sample(nrow(starter)),]
+
+
+cs<-starter
+cs<-cs[cs$phenotype=="L. dispensable",]
+
+
+
+table<-as.data.frame(table(cs$cloneid))
+multiples<-unique(table[table$Freq>1,]$Var1)
+tempcs<-cs
+matches<-match(multiples,cs$cloneid)
+tempcs[matches,]$cloneid=NA
+matches<-match(multiples,cs$cloneid)
+matches2<-match(multiples,tempcs$cloneid)
+df1<-cs[matches,]
+#df1=df1[df1$Confidence>6,]
+nrow(df1)
+cor(df1$normd6toinputA,df1$input,use="complete.obs")
+df2<-cs[matches2,]
+corr<-cor(log10(df1$fitness),log10(df2$fitness))
+colnames(df1)
+print(ggplot(df1,aes(x=log10(df1$normd6toinputA),y=log10(df2$normd6toinputA)))+geom_point()+ggtitle(paste(c("Both confidence values greater than  correlation: ",corr),collapse="",sep=""))+ geom_abline(intercept = 0)+labs(x="Fitness value from one experiment",y="Fitness value from another experiment"))
+print(mean(abs(df1$fitness-df2$fitness)))
+expdiff=sqrt(df1$variance+df2$variance)*sqrt(2/3.14)
+print(mean(expdiff))
+
+```
+
+
+
+

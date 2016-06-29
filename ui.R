@@ -43,7 +43,36 @@ shinyUI(fluidPage(titlePanel("", windowTitle = "PlasmoGEM data explorer"),
 <img style="float:right" id="sangerLog" src="http://plasmogem.sanger.ac.uk/static/images/sanger-logo.png" ,="" alt="Sanger logo">
 <div style="clear:both"></div>
 
-      </div>'),
+      </div>'),HTML(" <script type='text/javascript'>
+        $(function()
+        {
+            // Prevent accidental navigation away
+            $(':input').bind(
+                'change', function() { setConfirmUnload(true); });
+            $('.noprompt-required').click(
+                function() { setConfirmUnload(false); });
+
+            function setConfirmUnload(on)
+            {
+                window.onbeforeunload = on ? unloadMessage : null;
+            }
+            function unloadMessage()
+            {
+                return ('You have entered new data on this page. ' +
+                        'If you navigate away from this page without ' +
+                        'first saving your data, the changes will be lost.');
+            }
+
+            window.onerror = UnspecifiedErrorHandler;
+            function UnspecifiedErrorHandler()
+            {
+                return true;
+            }
+
+        }); 
+
+    </script>"),
+
   fluidRow(column(9,bsModal("modalURL", "More information", "modalURLShow", size = "small",shinyURL.ui()),
   bsModal("modalColumns", "Customise columns", "modalColumnsShow", size = "large",
   checkboxGroupInput("columns", "Included columns", "")
@@ -163,7 +192,7 @@ checkboxInput("customhidemissing","Hide missing values"))
                                tabPanel("Download CSV",  textOutput("downloadwarning"), textInput("downloadfilename","File name (optional)"),actionButton("modalColumnsShow", "Customise columns"),downloadButton('downloadData', 'Download CSV')),
                                tabPanel("Help / About",  htmlOutput('help')),
                              
-                                if(admin){tabPanel("Custom Code",value="custom", aceEditor("ccrmd",mode="markdown",value="```{r}
+                                if(admin){tabPanel("Custom Code",value="custom", aceEditor("ccrmd",wordWrap =T,mode="markdown",value="```{r}
 2+2
 plot(rnorm(23))
 ```"),   actionButton("cceval", "Run") ,htmlOutput("knitDoc"),downloadButton('report', 'Download PDF'), DT::dataTableOutput("ccfiles"),actionButton("ccload", "Load"),textInput("ccfilename",label="Filename"),actionButton("ccsave", "Save"),actionButton("ccrefresh", "Refresh"))}else{tabPanel(" ",  HTML("Nothing to see here"))}

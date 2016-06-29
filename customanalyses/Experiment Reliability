@@ -1,0 +1,14 @@
+Evaluation of experiment reliability
+=======================
+
+
+
+
+```{r}
+cs<-combSource()
+controls=c("PBANKA_103440","PBANKA_110420","PBANKA_140160","PBANKA_051490","PBANKA_051500","PBANKA_103780")
+cs$type=ifelse(cs$gene %in% controls,"control","other")
+
+ggplot(cs,aes(x=experiment,y=Confidence,color=type))+geom_boxplot()+ theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+

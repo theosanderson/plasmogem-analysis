@@ -1,0 +1,9 @@
+```{r}
+bla<-read.table("./otherdata/yeastphenotypes.tsv",sep="\t",header=T)
+cs<-combSource()
+
+ggplot(cs,aes(x=phenotype,fill=phenotype))+geom_bar() + facet_wrap( ~ experiment, scales = "free_y")+ scale_fill_manual(values = phenolevelscolor)+theme_gray(base_size = 8)
+
+
+```
+

@@ -1,0 +1,22 @@
+```{r}
+bla<-read.table("./otherdata/yeastphenotypes.tsv",sep="\t",header=T)
+cs<-combSource()
+
+m<-merge(cs,bla,by.x="gene",by.y="PbID")
+m<-m[m$Yeastpheno!="",]
+m$Yeastpheno=as.character(m$Yeastpheno)
+m[m$Yeastpheno=="competitive fitness: decreased ",]$Yeastpheno="Slow"
+m<-m[m$phenotype!="Insufficient data",]
+colnames(m)
+nrow(m)
+ggplot(m,aes(x=phenotype,fill=phenotype))+geom_bar() + facet_wrap( ~ Yeastpheno, scales = "free_y")+ scale_fill_manual(values = phenolevelscolor)
+
+m$Yeastpheno=factor(as.character(m$Yeastpheno),levels=c("inviable ","Slow","viable "))
+m$phenotype=factor(as.character(m$phenotype),levels=c("L. essential","Sig slow","L. dispensable"))
+t<-structable(Yeastpheno ~ phenotype,data=m)
+t
+assoc(t, shade=TRUE, legend=TRUE,xlab="Bla")
+mosaic(t,shade=T,legend=T)
+
+library(vcd)
+```

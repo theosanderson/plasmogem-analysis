@@ -1,0 +1,24 @@
+```{r}
+trans<-read.table("./otherdata/hj",sep="\t",header=T)
+cs<-combSource()
+cs<-cs[cs$phenotype=="L. dispensable",]
+colnames(cs)
+trans$normd6toinput=cs[match(trans$f,cs$PfID),"normd6toinputA"]
+#match(trans$f,cs$PfID)
+#trans$normd6toinput
+colnames=colnames(trans)
+
+print(ggplot(trans,aes(x=X1.hpi,y=normd6toinput))+geom_point()+scale_x_log10()+scale_y_log10())
+
+library(corrplot)
+trans<-trans[!is.na(trans$normd6toinput),]
+
+mat<-trans[,2:50]
+#mat[1:49,]<-log10(mat[1:49,])
+M <- cor(mat)
+M
+corrplot(M, method="circle")
+colnames(trans)
+cor.test(trans$X47.hpi,trans$normd6toinput)
+
+```

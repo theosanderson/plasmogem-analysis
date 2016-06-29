@@ -1,0 +1,36 @@
+```{r}
+bla<-read.table("./otherdata/rmgmdb504files.tsv",sep="\t",header=T)
+cs<-addPhenotypes(multicomb())
+
+m<-merge(cs,bla,by.x="gene",by.y="gene")
+m<-m[m$Decision!="",]
+m$Decision=as.character(m$Decision)
+
+m<-m[m$phenotype!="Insufficient data",]
+colnames(m)
+nrow(m)
+ggplot(m,aes(x=phenotype,fill=phenotype))+geom_bar() + facet_wrap( ~ Decision, scales = "free_y")+ scale_fill_manual(values = phenolevelscolor)
+
+nrow(m)
+ggplot(m,aes(x=Decision,fill=phenotype))+geom_bar(position="fill")+ scale_fill_manual(values = phenolevelscolor)
+ggplot(m,aes(x=phenotype,fill=Decision))+geom_bar(position="fill")+labs(fill="RMGMdb phenotype")
+
+#m$Decision=factor(as.character(m$Decision),levels=c("Non-targetable","Phenotype","Viable"))
+#m$phenotype=factor(as.character(m$phenotype),levels=c("L. essential","Sig slow","L. dispensable"))
+
+m$phenotype=as.character(m$phenotype)
+m[m$Decision=="Phenotype",]$Decision="Viable"
+m[m$phenotype=="Sig slow","phenotype"]="Viable"
+m[m$phenotype=="Sig fast",]$phenotype="Viable"
+m[m$phenotype=="L. dispensable",]$phenotype="Viable"
+
+ggplot(m,aes(x=phenotype,fill=phenotype))+geom_bar() + facet_wrap( ~ Decision, scales = "free_y")
+
+t<-structable(Decision ~ phenotype,data=m)
+t
+assoc(t, shade=TRUE, legend=TRUE,xlab="Bla")
+mosaic(t,shade=T,legend=T)
+
+library(vcd)
+```
+
