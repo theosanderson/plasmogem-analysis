@@ -1,14 +1,14 @@
 
 source("LoadHelperVariance.R") 
-  
+    
 library(shiny)        
 
   library(knitr)     
 library(topGO)  
 library(dplyr)     
-library(DT) 
+library(DT)  
 library(Hmisc)  
-library("shinyURL")    
+library("shinyURL")     
  
  phenolevels=c("Insufficient data","L. essential","Sig slow","L. dispensable","Sig fast","Unselected")  
  phenolevelslong=c("Insufficient data","Likely essential","Significantly slow","Likely dispensable","Significantly fast","Unselected")  
@@ -37,7 +37,7 @@ fullSet$Relative.Growth.Rate=fullSet$fitness
  
 experimentTable<-as.data.frame(table(fullSet$experiment))
 experimentTable<-data.frame(Experiment=experimentTable$Var1,Genes=experimentTable$Freq)
-
+ 
 
 
 otherdata = data.frame(thingie = -5:10)
@@ -49,11 +49,12 @@ phenos <- read.csv("./otherdata/barseqphenotypespretheounique.csv")
 genomiclocations <- read.csv("./otherdata/genomiclocations.csv", header=TRUE)
 genomiclocations$csome=as.numeric(as.character(genomiclocations$csome))
 
-cloneIDs <- read.table("./otherdata/cloneids.txt",sep="\t", header=TRUE)
+cloneIDs <- read.csv("./otherdata/stm_analyses_repository_copy_150616_2.csv", header=TRUE)
+barseqtemp <- read.table("./otherdata/barseqlookup.txt",sep="\t", header=TRUE)
 pfextradata <- read.csv("./otherdata/PfExtraData.csv", header=TRUE)
 
-
-
+homology<- read.csv("./otherdata/VectorDataGC", header=TRUE)
+ 
 
 addExtraData<-function(df,addpfextra=FALSE){
 fullSet2<-df
@@ -377,8 +378,8 @@ if( sum(combSource()$selected>0.5)>0){
 	
         newcomb <- initcomb()
         
-		tab <- as.data.frame(table(newcomb$gene))
-       
+		#tab <- as.data.frame(table(newcomb$gene))
+       ###START THE BLOCK CONTAINING THE PROCESS OF WORKING OUT WHAT IS SELECTED
         newcomb$selected = input$pointopacity/100
         if (input$genelist != "") {
         
@@ -432,29 +433,10 @@ if( sum(combSource()$selected>0.5)>0){
 		
 		}
         newcomb[newcomb$selected<0.1,'selected']= 0.25
+        ##END THE BLOCK WORKING OUT WHAT IS SELECTED
         
-        newcomb$z1 <- (1 - newcomb$Relative.Growth.Rate)/sqrt(newcomb$variance)
-        newcomb$p1 <- 2 * pnorm(-abs(newcomb$z1))
-        newcomb$f1 = p.adjust(newcomb$p1, method = input$padjmethod)
-        newcomb$call1 = FALSE
-        newcomb[newcomb$f1 < input$pvalue, ]$call1 = TRUE
-        
-        newcomb$z0 <- (0.1 - newcomb$Relative.Growth.Rate)/sqrt(newcomb$variance)
-        newcomb$p0 <- pnorm(-abs(newcomb$z0))
-        newcomb$f0 = p.adjust(newcomb$p0, method = "fdr")
-        newcomb$call0 = FALSE
-        newcomb[newcomb$f0 < input$pvalue & newcomb$Relative.Growth.Rate > 0.1, ]$call0 = TRUE
-        newcomb$phenotype = "None"
-        newcomb$phenotype[newcomb$call0 & newcomb$call1&newcomb$Relative.Growth.Rate>1 ] <- phenolevels[5]
-		newcomb$phenotype[newcomb$call0 & newcomb$call1 &newcomb$Relative.Growth.Rate<1] <- phenolevels[3]
-        newcomb$phenotype[newcomb$call0 & !newcomb$call1 ] <- phenolevels[4]
-        newcomb$phenotype[!newcomb$call0 & newcomb$call1 ] <- phenolevels[2]
-        newcomb$phenotype[!(newcomb$call0 | newcomb$call1) ] <- phenolevels[1]
-		newcomb$phenotype=factor(as.character(newcomb$phenotype),levels=phenolevels)
-      
-        newcomb$id=1:length(newcomb$phenotype)
         #newcomb<-newcomb[newcomb$phenotype!=phenolevels[1],]
-        newcomb
+        addPhenotypes(newcomb)
 		})
     })
     
@@ -774,10 +756,38 @@ if(input$usermgmdb==TRUE){
 	#cat("hello!", file = stderr())
 	#fullSet2
 	#fullSet2
-	fullSet2<-merge(fullSet2,cloneIDs,by=c("gene","experiment"),all.x=TRUE)
+	fullSet2<-merge(fullSet2,barseqtemp,by=c("experiment"),all.x=TRUE)
+	fullSet2<-merge(fullSet2,cloneIDs,by=c("gene","barseq"),all.x=TRUE)
+fullSet2<-merge(fullSet2,homology,by=c("cloneid"),all.x=TRUE)
+
+	
 	
 })
 
+ addPhenotypes<-function(newcomb){
+#NOW CALCULATE PHENOTYPES USING P VALUES
+        newcomb$z1 <- (1 - newcomb$Relative.Growth.Rate)/sqrt(newcomb$variance)
+        newcomb$p1 <- 2 * pnorm(-abs(newcomb$z1))
+        newcomb$f1 = p.adjust(newcomb$p1, method = input$padjmethod)
+        newcomb$call1 = FALSE
+        newcomb[newcomb$f1 < input$pvalue, ]$call1 = TRUE
+        
+        newcomb$z0 <- (0.1 - newcomb$Relative.Growth.Rate)/sqrt(newcomb$variance)
+        newcomb$p0 <- pnorm(-abs(newcomb$z0))
+        newcomb$f0 = p.adjust(newcomb$p0, method = input$padjmethod)
+        newcomb$call0 = FALSE
+        newcomb[newcomb$f0 < input$pvalue & newcomb$Relative.Growth.Rate > 0.1, ]$call0 = TRUE
+        newcomb$phenotype = "None"
+        newcomb$phenotype[newcomb$call0 & newcomb$call1&newcomb$Relative.Growth.Rate>1 ] <- phenolevels[5]
+		newcomb$phenotype[newcomb$call0 & newcomb$call1 &newcomb$Relative.Growth.Rate<1] <- phenolevels[3]
+        newcomb$phenotype[newcomb$call0 & !newcomb$call1 ] <- phenolevels[4]
+        newcomb$phenotype[!newcomb$call0 & newcomb$call1 ] <- phenolevels[2]
+        newcomb$phenotype[!(newcomb$call0 | newcomb$call1) ] <- phenolevels[1]
+		newcomb$phenotype=factor(as.character(newcomb$phenotype),levels=phenolevels)
+      
+        newcomb$id=1:length(newcomb$phenotype)
+        return(newcomb);
+}
 multicomb<-reactive({ 
 
 
@@ -854,8 +864,8 @@ output$debug <- renderPrint({
 
 
 })
-
-
+    
+      
 
  output$selectedgeneinfo <- renderPlot({
  cs<-combSource()

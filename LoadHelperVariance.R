@@ -196,6 +196,24 @@ for (g in 1:dims[3]){
   variancematrix<-absfitnessvar[,,g]
   fitnesses=c(fitnessmatrix)
   variances=c(variancematrix)
+  minvariance=min(variances,na.rm=T)
+  #variancesnotna=na.omit(variances)
+  minfitnessloc=which(fitnesses==min(fitnesses,na.rm=T))
+  if(length(minfitnessloc)==1 & !(is.na(minvariance))){
+   if(variances[minfitnessloc]==minvariance){
+    secondrank=variances[rank(variances)==2]
+    if (!is.null(secondrank)){
+   	variances[minfitnessloc]=secondrank
+   	variancematrix[variancematrix==minvariance]=secondrank
+   	}
+   }
+  }
+ # if(variances[minfitnessloc]==){
+  #fitnesses[fitnesses==min(fitnesses,na.rm=T)]=NA
+
+  #}
+ absfitnessvar[,,g]<-variancematrix
+ 
   gauss=gaussianMeanAndVariance(fitnesses,variances)
   singleabsfitness[g]=gauss[1]
   singleabsfitnessvar[g]=gauss[2]
@@ -211,8 +229,8 @@ else{
 normd6toinputA <- rep(NA, dims[3])
 norminput <- rep(NA, dims[3])
 }
-bcdk=which(filteredgenes=="PBANKA_110420")
-if("PBANKA_110420"%in% filteredgenes){
+bcdk=which(filteredgenes=="PBANKA_051490")
+if("PBANKA_051490"%in% filteredgenes){
 normd6toinputB=d6toinput/d6toinput[bcdk]
 }
 else{
@@ -227,6 +245,15 @@ else{
 normd6toinputC <- rep(NA, dims[3])
 }
 
+bcdk=which(filteredgenes=="p230p-tag")
+if("p230p-tag"%in% filteredgenes){
+normd6toinputD=d6toinput/d6toinput[bcdk]
+}
+else{
+normd6toinputD <- rep(NA, dims[3])
+}
+
+
 
 if(nmice>2){
 day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,],ratioarray[3,2,])
@@ -235,7 +262,7 @@ else{
 day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,])
 }
 
-absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,norminput=norminput,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
+absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,norminput=norminput,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,normd6toinputD=normd6toinputD,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
 #These absolute abundance measures may not actually be useful?
 absfitnessdf$lower=absfitnessdf$fitness-sqrt(absfitnessdf$variance)*2
 absfitnessdf$upper=absfitnessdf$fitness+sqrt(absfitnessdf$variance)*2
