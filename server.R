@@ -792,7 +792,7 @@ multicomb<-reactive({
 	fullSet2<-singlecomb()
 	if(is.null(fullSet2)){return(NULL);}
 	fullSet3<- fullSet2 %>% group_by(gene) %>% do(gaussianMeanAndVariance2(.$Relative.Growth.Rate,.$variance)) %>% transmute(Relative.Growth.Rate=mean, variance=var)
-	fullSet4<-fullSet2  %>%  group_by(gene)  %.%  summarise(cloneid=paste(unique(cloneid),sep=",",collapse=","),timesAnalysed=length(Relative.Growth.Rate),normd6toinputA=mean(normd6toinputA,na.rm=T),normd6toinputB=mean(normd6toinputB,na.rm=T),normd6toinputC=mean(normd6toinputC,na.rm=T))
+	fullSet4<-fullSet2  %>%  group_by(gene)  %>%  summarise(cloneid=paste(unique(cloneid),sep=",",collapse=","),timesAnalysed=length(Relative.Growth.Rate),normd6toinputA=mean(normd6toinputA,na.rm=T),normd6toinputB=mean(normd6toinputB,na.rm=T),normd6toinputC=mean(normd6toinputC,na.rm=T))
 
 	fullSet2<-merge(fullSet3,fullSet4,by=c("gene")) 
 	fullSet2<-addExtraData(fullSet2)
