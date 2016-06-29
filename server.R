@@ -51,12 +51,11 @@ genomiclocations$csome=as.numeric(as.character(genomiclocations$csome))
 
 cloneIDs <- read.csv("./otherdata/stm_analyses_repository_copy_150616_2.csv", header=TRUE)
 barseqtemp <- read.table("./otherdata/barseqlookup.txt",sep="\t", header=TRUE)
-pfextradata <- read.csv("./otherdata/PfExtraData.csv", header=TRUE)
 
 homology<- read.csv("./otherdata/VectorDataGC", header=TRUE)
  
 
-addExtraData<-function(df,addpfextra=FALSE){
+addExtraData<-function(df){
 fullSet2<-df
 fullSet2$lower=fullSet2$Relative.Growth.Rate-2*sqrt(fullSet2$variance)
 	fullSet2$upper=fullSet2$Relative.Growth.Rate+2*sqrt(fullSet2$variance)
@@ -64,8 +63,7 @@ fullSet2$lower=fullSet2$Relative.Growth.Rate-2*sqrt(fullSet2$variance)
 	  
 	comb <- merge(fullSet2, geneinfo, by.x = "gene", by.y = "Old.Gene.ID", all.x = TRUE)
 	comb <- merge(comb,genomiclocations,by.x="current_version_ID",by.y="gene",all.x=TRUE)	
-	if(addpfextra){comb <- merge(comb,pfextradata,by.x="current_version_ID",by.y="PbNewId",all.x=TRUE)	
-	}
+	
 	comb$Confidence = -log(comb$variance)
 	comb$Relative.Growth.Rate[!is.finite(comb$Confidence) ] = sample(1:1000/1000, nrow(comb[!is.finite(comb$Confidence), ]),replace=TRUE)
 	comb$Confidence[!is.finite(comb$Confidence) ] = 0.1
@@ -751,7 +749,7 @@ if(input$usermgmdb==TRUE){
 	
 
 	
-	fullSet2<-addExtraData(fullSet2,input$addpfextra)
+	fullSet2<-addExtraData(fullSet2)
 	})
 	#cat("hello!", file = stderr())
 	#fullSet2
@@ -797,7 +795,7 @@ multicomb<-reactive({
 	fullSet4<-fullSet2  %>%  group_by(gene)  %.%  summarise(cloneid=paste(unique(cloneid),sep=",",collapse=","),timesAnalysed=length(Relative.Growth.Rate),normd6toinputA=mean(normd6toinputA,na.rm=T),normd6toinputB=mean(normd6toinputB,na.rm=T),normd6toinputC=mean(normd6toinputC,na.rm=T))
 
 	fullSet2<-merge(fullSet3,fullSet4,by=c("gene")) 
-	fullSet2<-addExtraData(fullSet2,input$addpfextra)
+	fullSet2<-addExtraData(fullSet2)
 	fullSet2
 	})
 initcomb<-reactive({ 
