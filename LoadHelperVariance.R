@@ -196,8 +196,10 @@ for (g in 1:dims[3]){
   variancematrix<-absfitnessvar[,,g]
   fitnesses=c(fitnessmatrix)
   variances=c(variancematrix)
-  minvariance=min(variances,na.rm=T)
+  
   #variancesnotna=na.omit(variances)
+  if(sum(!is.na(fitnesses))>0){
+    minvariance=min(variances,na.rm=T)
   minfitnessloc=which(fitnesses==min(fitnesses,na.rm=T))
   if(length(minfitnessloc)==1 & !(is.na(minvariance))){
    if(variances[minfitnessloc]==minvariance){
@@ -208,6 +210,7 @@ for (g in 1:dims[3]){
    	}
    }
   }
+}
  # if(variances[minfitnessloc]==){
   #fitnesses[fitnesses==min(fitnesses,na.rm=T)]=NA
 
@@ -344,7 +347,7 @@ for (i in 1:rangetoconsider){
 }
 
 df2=aggregate(normalisedvar ~ initmolecules, data = df, mean)
-write.csv(df2,"pcrvariances.csv")
+write.csv(df2,"./otherdata/pcrvariances.csv")
 return(df2)
 }
 }

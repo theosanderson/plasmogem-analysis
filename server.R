@@ -45,7 +45,7 @@ otherdata$halfwidth = 2 * sqrt(exp(-otherdata$thingie))
 otherdata$xmin = 1.2 - otherdata$halfwidth
 otherdata$xmax = 1.2 + otherdata$halfwidth
 # ggplot(comb[comb$Consensus.phenotype!='',],aes(y=-log(variance),x=fitness,color=barseq.phenotype))+geom_point(alpha=1)+coord_cartesian(xlim=c(0,1.5),ylim=c(-5,10))+geom_errorbarh(data=otherdata,aes(xmin=xmin,xmax=xmax,y=thingie,x=xmin+xmax/2),color='gray')+scale_color_manual(values=c('white','blue','red','green','yellow'))
-phenos <- read.csv("./otherdata/barseqphenotypespretheounique.csv")
+geneinfo <- read.csv("./otherdata/geneinfo.csv")
 genomiclocations <- read.csv("./otherdata/genomiclocations.csv", header=TRUE)
 genomiclocations$csome=as.numeric(as.character(genomiclocations$csome))
 
@@ -62,7 +62,7 @@ fullSet2$lower=fullSet2$Relative.Growth.Rate-2*sqrt(fullSet2$variance)
 	fullSet2$upper=fullSet2$Relative.Growth.Rate+2*sqrt(fullSet2$variance)
 	
 	  
-	comb <- merge(fullSet2, phenos, by.x = "gene", by.y = "Old.Gene.ID", all.x = TRUE)
+	comb <- merge(fullSet2, geneinfo, by.x = "gene", by.y = "Old.Gene.ID", all.x = TRUE)
 	comb <- merge(comb,genomiclocations,by.x="current_version_ID",by.y="gene",all.x=TRUE)	
 	if(addpfextra){comb <- merge(comb,pfextradata,by.x="current_version_ID",by.y="PbNewId",all.x=TRUE)	
 	}
