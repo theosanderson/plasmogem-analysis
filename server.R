@@ -1,21 +1,32 @@
 
 source("LoadHelperVariance.R") 
     
-library(shiny)        
-
+library(shiny)         
+ 
   library(knitr)     
 library(topGO)  
 library(dplyr)     
 library(DT)  
 library(Hmisc)  
 library("shinyURL")     
- 
+ opts_knit$set(root.dir = getwd())
  phenolevels=c("Insufficient data","L. essential","Sig slow","L. dispensable","Sig fast","Unselected")  
  phenolevelslong=c("Insufficient data","Likely essential","Significantly slow","Likely dispensable","Significantly fast","Unselected")  
-  phenolevelscolor=c("black", "#ed1c24", "blue","#007603","purple", "darkgray")
+ # phenolevelscolor=c("black", "#ed1c24", "blue","#007603","purple", "darkgray")
+ 
+   #phenolevelscolor=c("black", "#d95f02", "#7570b3","#1b9e77","purple", "darkgray") #safe
+      #phenolevelscolor=c("black", "#fc8d62", "#8da0cb","#66c2a5","purple", "darkgray") #safe
+          phenolevelscolor=c("black", "#f90f00", "#0f3791","#007e41","#f83cd9", "darkgray") #safe
+          phenolevelscolor=c("black", "#f90f00", "#002d91","#007e41","#f83cd9", "darkgray") #safe with brighter blue
+        #  phenolevelscolor=c("black", "#f90f00", "#002d91","#00bd61","#f83cd9", "darkgray") #safe with brighter blue,green
+          
+          
+          
+ # phenolevelscolor=c("black", "#ee3333", "#3366aa","#66aa55","#922288", "darkgray")
  names(phenolevelscolor)=phenolevels
      names(phenolevelslong)=phenolevels    
-	 fast=F
+	 fast=T
+	 save=F
 	   if(fast==FALSE){
 files <- list.files(path = "./countfiles/", pattern = "*.csv", full.names = T, recursive = FALSE)
 
@@ -49,8 +60,8 @@ geneinfo <- read.csv("./otherdata/geneinfo.csv")
 genomiclocations <- read.csv("./otherdata/genomiclocations.csv", header=TRUE)
 genomiclocations$csome=as.numeric(as.character(genomiclocations$csome))
 
-cloneIDs <- read.csv("./otherdata/stm_analyses_repository_copy_150616_2.csv", header=TRUE)
-barseqtemp <- read.table("./otherdata/barseqlookup.txt",sep="\t", header=TRUE)
+cloneIDs <- read.csv("./otherdata/stm_analyses_repository_eb edit_290616.csv", header=TRUE)
+#barseqtemp <- read.table("./otherdata/barseqlookup.txt",sep="\t", header=TRUE)
 
 homology<- read.csv("./otherdata/VectorDataGC", header=TRUE)
  
@@ -147,6 +158,7 @@ if (is.null(yaxis)){
 			
 			if(input$plottype=="Point") {
 			if(input$color=="color"){
+			
 			p=p+ geom_point(data=comb[comb$color=="Unselected",],size=input$pointsize,position=position_jitter(width=input$xjitter,height=input$yjitter))
 			if(sum(comb$color!="Unselected")==1){
 				p=p+ geom_point(data=comb[comb$color!="Unselected",],shape=1,size=20,color="black")
@@ -212,7 +224,7 @@ p=p+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 if (input$color == "color") {
 		
-p=p+ scale_color_manual(values = phenolevelscolor)+labs(color="Growth phenotype")		
+p=p+ scale_color_manual(values = phenolevelscolor)+labs(color="Growth phenotype")	+guides(colour = guide_legend(override.aes = list(size=2,alpha=1)))	
 }
 
 if (input$fill == "color") { 
@@ -263,14 +275,12 @@ p
 	 comb <- combSource()
 	 
 	 if(input$defaultplot==TRUE){
-	  if (input$Pvalues == TRUE) {
+	  
             
             
             comb$color = comb$phenotype
             
-        } else {
-            comb$color = comb$barseq.phenotype
-        }
+       
 		
 		if (input$colorSelected == TRUE) {
             
@@ -279,9 +289,9 @@ p
 			}
             
         }
-		if (input$Pvalues == TRUE) {
+		
 			comb$color=factor(comb$color,levels=phenolevels)
-		}
+	
 		
 		 
 	 }
@@ -434,7 +444,7 @@ if( sum(combSource()$selected>0.5)>0){
         ##END THE BLOCK WORKING OUT WHAT IS SELECTED
         
         #newcomb<-newcomb[newcomb$phenotype!=phenolevels[1],]
-        addPhenotypes(newcomb)
+        newcomb;
 		})
     })
     
@@ -532,7 +542,7 @@ if( sum(combSource()$selected>0.5)>0){
         cloneidnum=gsub("[^0-9]","",rower$cloneid)
 
  		if(!is.na(cloneidnum) & !is.na(rower$cloneid) & cloneidnum != "" ){
- 		 string<-paste(string,"<tr><td class='lefttd'>Clones transfected:</td><td><a href='http://plasmogem.sanger.ac.uk/designs/final_vector/", cloneidnum,"'>",rower$cloneid,"</a></td>","</tr>",sep="",collapse="");
+ 		 string<-paste(string,"<tr><td class='lefttd'>Clones transfected:</td><td><a target='blank' href='http://plasmogem.sanger.ac.uk/designs/final_vector/", cloneidnum,"'>",rower$cloneid,"</a></td>","</tr>",sep="",collapse="");
      
  		}
         string<-paste(string,"</table>",sep="",collapse="");
@@ -654,7 +664,7 @@ cat (" Please note that this is not the full dataset, as you have entered filter
         godb <- setNames(as.list(go$GO), go$ID)
         godb
     }) 
-	 
+	  
 	goDBReactive2 <- reactive({
         if (input$gospecies == "pb") {
             gomap <- read.csv("./otherdata/geneid2gopb.csv", stringsAsFactors = FALSE)
@@ -731,6 +741,12 @@ cat (" Please note that this is not the full dataset, as you have entered filter
   return()
 }
 withProgress(message="Loading initial data",value=0.25,{
+if(fast==T){
+#stop("Fast mode not finished")
+load("cachedsinglecomb.cache")
+}
+else{
+
 if(input$usermgmdb==TRUE){
 	fullSet2 <- read.csv("./otherdata/rmgmdbinfakeformat.csv")
 	fullSet2$variance=sample((1:1000/20000),length(fullSet2$variance))
@@ -750,16 +766,22 @@ if(input$usermgmdb==TRUE){
 
 	
 	fullSet2<-addExtraData(fullSet2)
-	})
+
+
+	
+
+
 	#cat("hello!", file = stderr())
 	#fullSet2
 	#fullSet2
-	fullSet2<-merge(fullSet2,barseqtemp,by=c("experiment"),all.x=TRUE)
-	fullSet2<-merge(fullSet2,cloneIDs,by=c("gene","barseq"),all.x=TRUE)
+	#fullSet2<-merge(fullSet2,barseqtemp,by=c("experiment"),all.x=TRUE)
+	fullSet2<-merge(fullSet2,cloneIDs,by=c("gene","experiment"),all.x=TRUE)
 fullSet2<-merge(fullSet2,homology,by=c("cloneid"),all.x=TRUE)
-
-	
-	
+	if(save==T){save("fullSet2",file="cachedsinglecomb.cache")}
+	}
+	}
+		)
+	 fullSet2
 })
 
  addPhenotypes<-function(newcomb){
@@ -781,30 +803,54 @@ fullSet2<-merge(fullSet2,homology,by=c("cloneid"),all.x=TRUE)
         newcomb$phenotype[newcomb$call0 & !newcomb$call1 ] <- phenolevels[4]
         newcomb$phenotype[!newcomb$call0 & newcomb$call1 ] <- phenolevels[2]
         newcomb$phenotype[!(newcomb$call0 | newcomb$call1) ] <- phenolevels[1]
-		newcomb$phenotype=factor(as.character(newcomb$phenotype),levels=phenolevels)
+	
       
         newcomb$id=1:length(newcomb$phenotype)
+        extraessentials= (newcomb$phenotype== phenolevels[1] & is.na(newcomb$normd7toinputA))
+         
+        newcomb$type=ifelse(extraessentials,"extra","normal")
+         newcomb$Confidence=ifelse(extraessentials,1,newcomb$Confidence)
+        #newcomb$ConfidenceDrawn=ifelse(extraessentials,1+runif(length(newcomb$Confidence), -1, 1),newcomb$Confidence)
+        newcomb$Relative.Growth.Rate=ifelse(extraessentials,.1,newcomb$Relative.Growth.Rate)
+        #newcomb$Relative.Growth.RateDrawn=ifelse(extraessentials,.1+runif(length(newcomb$Relative.Growth.Rate), -0.1, 0.1),newcomb$Relative.Growth.Rate)
+        newcomb$phenotype=ifelse(extraessentials,phenolevels[2],newcomb$phenotype)
+        
+        	newcomb$phenotype=factor(as.character(newcomb$phenotype),levels=phenolevels)
+        
         return(newcomb);
 }
 multicomb<-reactive({ 
 
+if(fast==T){
+load("cachedmulticomb.cache")
 
+}
+else{
 	fullSet2<-singlecomb()
 	if(is.null(fullSet2)){return(NULL);}
 	fullSet3<- fullSet2 %>% group_by(gene) %>% do(gaussianMeanAndVariance2(.$Relative.Growth.Rate,.$variance)) %>% transmute(Relative.Growth.Rate=mean, variance=var)
-	fullSet4<-fullSet2  %>%  group_by(gene)  %>%  summarise(cloneid=paste(unique(cloneid),sep=",",collapse=","),timesAnalysed=length(Relative.Growth.Rate),normd6toinputA=mean(normd6toinputA,na.rm=T),normd6toinputB=mean(normd6toinputB,na.rm=T),normd6toinputC=mean(normd6toinputC,na.rm=T))
+	fullSet4<-fullSet2  %>%  group_by(gene)  %>%  summarise(cloneid=paste(unique(cloneid),sep=",",collapse=","),timesAnalysed=length(Relative.Growth.Rate),normd7toinputA=mean(normd7toinputA,na.rm=T),normd6toinputA=mean(normd6toinputA,na.rm=T),normd6toinputB=mean(normd6toinputB,na.rm=T),normd6toinputC=mean(normd6toinputC,na.rm=T))
 
 	fullSet2<-merge(fullSet3,fullSet4,by=c("gene")) 
 	fullSet2<-addExtraData(fullSet2)
+	
+		if(save==T){save("fullSet2",file="cachedmulticomb.cache")}
+	
+	
+	}
 	fullSet2
 	})
+
+
 initcomb<-reactive({ 
 if(input$mergemultipleobs==TRUE){
-	multicomb()
+addPhenotypes(multicomb())	
 }
 else{
-singlecomb()}
-})
+addPhenotypes(singlecomb())	
+}
+}
+)
 
 
  observeEvent(input$egTagKO, {

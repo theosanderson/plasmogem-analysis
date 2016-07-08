@@ -2,7 +2,7 @@ library(shiny)
 library(shinyBS)
 library(DT)
 library(shinyAce)
-admin=T
+admin=F
 library("shinyURL")
 mycss <- "
 #plot-container {
@@ -137,7 +137,7 @@ h3("Estimated accuracy of fitnesses at each timepoint/mouse"),plotOutput("plot4"
                                        HTML('Gene list:<br><textarea id="genelist" rows="3" cols="40"></textarea>')
                                       
                               ),
-							   tabPanel("Experiments",actionButton("includedExperimentsShow", "Included experiments"),  checkboxInput(inputId = "mergemultipleobs",  label = strong("Merge multiple observations"),value=TRUE  ),   conditionalPanel(condition = "input.mergemultipleobs == false",DT::dataTableOutput('experiments'))),
+							   tabPanel("Experiments",if(admin==T){actionButton("includedExperimentsShow", "Included experiments")}else{NULL},  checkboxInput(inputId = "mergemultipleobs",  label = strong("Merge multiple observations"),value=TRUE  ),   conditionalPanel(condition = "input.mergemultipleobs == false",DT::dataTableOutput('experiments'))),
 							   tabPanel("Relative growth rate",checkboxInput(inputId = "filterfitness",  label = strong("Filter on relative growth rate"),value=FALSE  ),   conditionalPanel(condition = "input.filterfitness == true",selectInput("filterfitnesstype", "Type:",c("Best guess" = "bestguess", "Confidence interval" = "confint")),sliderInput("fitness","Relative Growth Rate",0,1.5,c(0,1.5))),
 							   checkboxInput(inputId = "filterconf",  label = strong("Filter on confidence"),value=FALSE  ),   conditionalPanel(condition = "input.filterconf == true",sliderInput("confidence","Fitness",0,10,c(0,10)))
 							   ),
@@ -157,7 +157,7 @@ h3("Estimated accuracy of fitnesses at each timepoint/mouse"),plotOutput("plot4"
 							   
 									  tabPanel("Visualisation",checkboxInput(inputId = "newGeneID",  label = strong("Use new gene IDs")),checkboxInput(inputId = "showErrorBars",  label = strong("Error guides")  ),checkboxInput(inputId = "colorSelected",  label = strong("Colour selection"),value=TRUE  ),  sliderInput("pointopacity","Point opacity",0,100,70),sliderInput("pointsize","Point size",0,2,1.3,step=0.1)),
 									   tabPanel("Phenotypes",
-                                       checkboxInput(inputId = "Pvalues",  label = strong("Calculate new phenotypes") ,value=TRUE ),
+                                       
                                        selectInput("padjmethod", "Multiple comparison adjustment:",
                                                    c("FDR" = "fdr", "None" = "none", "bonferroni" = "bonferroni")),
                                        sliderInput("pvalue","p-value",0,1,0.05) 

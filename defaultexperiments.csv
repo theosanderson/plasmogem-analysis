@@ -10,8 +10,8 @@ met14,yes
 met15,yes
 met2,yes
 PbSTM18,yes
-PbSTM19,yes
-PbSTM37_Balbc,yes
+PbSTM19,no
+PbSTM37a,yes
 PbSTM21,yes
 PbSTM22,yes
 PbSTM23,yes
@@ -37,9 +37,9 @@ met7,yes
 met8,yes
 met9,yes
 PbSTM33,no
-PbSTM34,yes
-PbSTM35,yes
-PbSTM36,yes
+PbSTM34,no
+PbSTM35,no
+PbSTM36,no
 PbSTM39,yes
 PbSTM40,yes
 PbSTM47b,no
@@ -58,7 +58,7 @@ PbSTM61,yes
 PbSTM62,yes
 PbSTM63,no
 PbSTM64,no
-PbSTM66,yes
+PbSTM66,no
 stm26,yes
 stm27,yes
 stm37_4r,yes

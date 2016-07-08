@@ -190,7 +190,7 @@ singleabsfitness <- rep(NA, dims[3])
 singleabsfitnessvar <- rep(NA, dims[3])
 
 d6toinput <- rep(NA, dims[3])
-
+d7toinput <- rep(NA, dims[3])
 for (g in 1:dims[3]){
   fitnessmatrix<-absfitness[,,g]
   variancematrix<-absfitnessvar[,,g]
@@ -221,15 +221,17 @@ for (g in 1:dims[3]){
   singleabsfitness[g]=gauss[1]
   singleabsfitnessvar[g]=gauss[2]
   d6toinput[g]=mean(ratioarray[,3,g])/filteredinputratio[g]
-  
+   d7toinput[g]=mean(ratioarray[,4,g])/filteredinputratio[g]
 }
 bcdk=which(filteredgenes=="PBANKA_103780")
 if("PBANKA_103780"%in% filteredgenes){
 normd6toinputA=d6toinput/d6toinput[bcdk]
+normd7toinputA=d7toinput/d7toinput[bcdk]
 norminput=filteredinputratio/filteredinputratio[bcdk]
 }
 else{
 normd6toinputA <- rep(NA, dims[3])
+normd7toinputA <- rep(NA, dims[3])
 norminput <- rep(NA, dims[3])
 }
 bcdk=which(filteredgenes=="PBANKA_051490")
@@ -265,7 +267,7 @@ else{
 day5absmax=pmax(ratioarray[1,2,],ratioarray[2,2,])
 }
 
-absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd6toinputA=normd6toinputA,norminput=norminput,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,normd6toinputD=normd6toinputD,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
+absfitnessdf=data.frame(gene=filteredgenes,fitness=singleabsfitness,variance=singleabsfitnessvar,d6toinput=d6toinput,normd7toinputA=normd7toinputA,normd6toinputA=normd6toinputA,norminput=norminput,normd6toinputB=normd6toinputB,normd6toinputC=normd6toinputC,normd6toinputD=normd6toinputD,day4abs=ratioarray[1,1,],day5absmax=day5absmax,day6abs=ratioarray[1,3,])
 #These absolute abundance measures may not actually be useful?
 absfitnessdf$lower=absfitnessdf$fitness-sqrt(absfitnessdf$variance)*2
 absfitnessdf$upper=absfitnessdf$fitness+sqrt(absfitnessdf$variance)*2

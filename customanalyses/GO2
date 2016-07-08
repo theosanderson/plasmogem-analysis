@@ -1,0 +1,141 @@
+```{r,fig.width=40,fig.height=10}
+library(gtable)
+library(grid)
+dothewholething<-function(algorithm,pval){
+mergedf=NULL;
+            #gomap <- read.csv("./otherdata/geneid2gopbnew.csv", stringsAsFactors = FALSE)
+            types<-c("BP","MF","CC")
+            phens<-c("L. essential","Sig slow","L. dispensable")
+             for (p in 1:3){
+            for (t in 1:3){
+     # p=1
+     # t=1
+        gomappf <- read.csv("./otherdata/geneid2gopf.csv", stringsAsFactors = FALSE)
+        gomappb <- read.csv("./otherdata/geneid2gopbnew.csv", stringsAsFactors = FALSE)
+        info<-geneinfo[,c("Old.Gene.ID","current_version_ID","PfID")]
+        #print(info)
+        gomappf<-merge(info,gomappf,by.y="ID",by.x="PfID")
+        nrow(gomappf)
+        gomappb<-merge(info,gomappb,by.y="ID",by.x="current_version_ID")
+        print(colnames(gomappf))
+        print(colnames(gomappb))
+        gomap<-rbind(gomappf,gomappb)[,c("Old.Gene.ID","GO")]
+        colnames(gomap)=c("ID","GO")
+        gomap<-unique(gomap)
+        
+        go <- aggregate(GO ~ ID, data = gomap, c)
+        godb <- setNames(as.list(go$GO), go$ID)
+	comb <- addPhenotypes(multicomb())
+	comb<-comb[comb$phenotype!="Insufficient data",]
+                allgenes = setNames(rep(1, length(comb$gene)), comb$gene)
+                myInterestingGenes <- comb[comb$phenotype==phens[p],]$gene
+                geneList <- factor(as.integer(comb$gene %in% myInterestingGenes))
+                names(geneList) <- comb$gene
+                
+           
+            GOdata <- new("topGOdata", ontology = types[t], allGenes = geneList, annot = annFUN.gene2GO, gene2GO = godb)
+            
+            resultant <- runTest(GOdata, algorithm =algorithm, statistic = "fisher")
+            
+            allRes <- GenTable(GOdata, res = resultant, orderBy = "res", ranksOf = "res", topNodes = min(200,length(resultant@score)))
+            
+            
+     tempdf<-as.data.frame(allRes)
+     tempdf<-tempdf[tempdf$res<pval,]
+     myterms = tempdf$GO.ID
+     mygenes <- genesInTerm(GOdata, myterms)
+     termdf=NULL
+     for (i in 1:length(myterms))
+   {
+       myterm <- myterms[i]
+       mygenesforterm <- mygenes[myterm][[1]]
+       temptermdf<-data.frame(term=rep(myterm,length(mygenesforterm)),ID=mygenesforterm)
+       if(!is.null(termdf)){termdf<-rbind(termdf,temptermdf)}
+       else{termdf<-temptermdf}
+       
+       
+       
+     }
+     tempdf$type=ontology = types[t]
+     tempdf$phen=phens[p]
+     tempdf<-merge(tempdf,termdf,by.x="GO.ID",by.y="term")
+     if(!is.null(mergedf)){
+     print(dim(mergedf))
+     print(dim(tempdf))
+     mergedf<-rbind(mergedf,tempdf)
+     }     else{
+     mergedf<-tempdf
+     }
+     }
+     }
+     nrow(mergedf)
+     colnames(mergedf)
+     adddata<-merge(mergedf,comb,by.x="ID",by.y="gene")
+   adddata$xlabel<-paste(adddata$type,adddata$Term,sep=": ")
+   adddata$termphen<-paste(adddata$Term,adddata$phen,sep="")
+ 
+     agg <- aggregate(Relative.Growth.Rate ~ termphen+phen, data = adddata, mean)
+       agg$phen=factor(as.character(agg$phen),levels=c("L. essential","Sig slow","L. dispensable"))
+     agglength <- aggregate(Relative.Growth.Rate ~ termphen , data = adddata, length)
+     grouped <- group_by(adddata,termphen, Term, phen)
+summary<-summarise(grouped, mean=mean(Relative.Growth.Rate), count=n())
+
+     agg <- agg[order(agg$phen,agg$Relative.Growth.Rate),] 
+  #   agg
+     adddata$termphen=factor(as.character(adddata$termphen),levels=as.character(agg$termphen))
+       adddata$phen=factor(as.character(adddata$phen),levels=c("L. essential","Sig slow","L. dispensable"))
+      
+   
+     
+     
+   give.n <- function(x){
+  return(c(y = 1.15, label = length(x))) 
+  
+}
+
+
+     p1<-ggplot(adddata,aes(x=1,fill=phenotype))+geom_bar(position="fill",color="black")+  coord_polar(theta = "y")+facet_grid(.~termphen)+scale_fill_manual(values=phenolevelscolor)+ theme(axis.ticks = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank()) 
+        
+        
+     p2<-ggplot(adddata,aes(x=Term,y=Relative.Growth.Rate))+geom_violin(aes(color=phen),fill="lightgray")+ theme(axis.text.x = element_text(angle = 90, hjust=1,vjust=0.5,size=15,color="black"))+scale_color_manual(values=phenolevelscolor)+theme(strip.text.x = element_blank())+ theme(strip.background = element_blank())+labs(y="Relative growth rate")+geom_jitter(height=0,width=0.3,alpha=0.1)+ stat_summary(fun.y = "mean", colour = "black", size = 4, geom = "point")+facet_grid(.~termphen,space="free_x",scale="free_x") + 
+  stat_summary(fun.data = give.n, geom = "text",fun.y=median)+scale_y_continuous(breaks=c(0,0.5,1),limits=c(0,1.25))
+
+    #print(p1)
+
+  #print(p2)
+  g2 <- ggplotGrob(p1)
+g1 <- ggplotGrob(p2)
+
+# Grab the panels from g2 and overlay them onto the panels of g1
+pp <- c(subset(g1$layout, grepl("panel", g1$layout$name), select = t:r))
+top=unique(pp$t)
+top
+thenames<-g1$layout[g1$layout$t==top,]$name
+#thenames
+g1<-gtable_add_rows(g1,unit(0.1, "null") , pos = unique(pp$t)-1)
+
+
+g <- gtable_add_grob(g1, g2$grobs[grepl("panel", g1$layout$name)], 
+                     pp$t, pp$l, pp$b, pp$l)
+g$layout[g$layout$name %in% thenames,]$t=top
+
+
+
+
+grid.newpage()
+grid.draw(g)
+}
+
+dothewholething("classic",0.01)
+dothewholething("weight01",0.05)
+dothewholething("weight",0.05)
+dothewholething("elim",0.005)
+dothewholething("parentchild",0.01)
+
+   ```
+   
+   RIBOSOMAL ASSEMBLY IS PROBLEM - FIND OUT WHY ESSENTIALS MISSING
+
+
