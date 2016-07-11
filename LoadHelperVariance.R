@@ -221,7 +221,7 @@ for (g in 1:dims[3]){
   singleabsfitness[g]=gauss[1]
   singleabsfitnessvar[g]=gauss[2]
   d6toinput[g]=mean(ratioarray[,3,g])/filteredinputratio[g]
-   d7toinput[g]=mean(ratioarray[,4,g])/filteredinputratio[g]
+   d7toinput[g]=mean(ratioarray[,4,g],na.rm=T)/filteredinputratio[g]
 }
 bcdk=which(filteredgenes=="PBANKA_103780")
 if("PBANKA_103780"%in% filteredgenes){

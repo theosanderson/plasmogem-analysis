@@ -325,7 +325,11 @@ p
     if(upper<1&lower>0.1){
     cat("From this experiment, this mutant appears to be slow-growing. You might expect to see barcodes slowly decreasing in abundance over time in the plot below.")
     }
-     if(upper>1&lower>0.1){
+    if(lower>1){
+    cat("From this experiment, this mutant may be fast-growing. You might expect to see barcodes increasing over time in the plot below.")
+    }
+     
+     if(upper>1&lower>0.1&lower<1){
     cat("From this experiment, this mutant may be dispensable. You might expect to see barcodes increasing over time, or remaining at a relatively constant level, in the plot below.")
     }
     
@@ -545,6 +549,9 @@ if( sum(combSource()$selected>0.5)>0){
  		 string<-paste(string,"<tr><td class='lefttd'>Clones transfected:</td><td><a target='blank' href='http://plasmogem.sanger.ac.uk/designs/final_vector/", cloneidnum,"'>",rower$cloneid,"</a></td>","</tr>",sep="",collapse="");
      
  		}
+ 		if (rower$type=="extra"){
+        string<-paste(string,"<tr><td class='lefttd'>Note:</td><td>This essential phenotype assignment is based on a very low level of barcode abundance on day 7 after transfection. However a consistent reduced barcode growth rate was not necessarily observed, hence the low confidence score.</td>","</tr>",sep="",collapse="");
+        }
         string<-paste(string,"</table>",sep="",collapse="");
         
      HTML(string)
@@ -806,7 +813,7 @@ fullSet2<-merge(fullSet2,homology,by=c("cloneid"),all.x=TRUE)
 	
       
         newcomb$id=1:length(newcomb$phenotype)
-        extraessentials= (newcomb$phenotype== phenolevels[1] & is.na(newcomb$normd7toinputA))
+        extraessentials= (newcomb$phenotype== phenolevels[1] & (is.na(newcomb$normd7toinputA)|newcomb$normd7toinputA<1e-2))
          
         newcomb$type=ifelse(extraessentials,"extra","normal")
          newcomb$Confidence=ifelse(extraessentials,1,newcomb$Confidence)
@@ -823,7 +830,7 @@ multicomb<-reactive({
 
 if(fast==T){
 load("cachedmulticomb.cache")
-
+ 
 }
 else{
 	fullSet2<-singlecomb()
